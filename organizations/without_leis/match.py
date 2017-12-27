@@ -30,62 +30,69 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
-def search_permid_for_lei(access_token, lei):
-	headers = {'X-AG-Access-Token' : access_token}
-	url = 'https://api.thomsonreuters.com/permid/search?q='+lei
+def permid_match_api(access_token, payload):
+	headers = {'X-AG-Access-Token' : access_token,
+		'x-openmatch-dataType':'Organization',
+		'Content-Type':'text/plain',
+		'x-openmatch-numberOfMatchesPerRecord': '1'}
+	url = 'https://api.thomsonreuters.com/permid/match'
 	ret = None
 	try:
-		response = requests.get(url, headers=headers)
+		response = requests.post(url, data=payload, headers=headers)
 	except Exception  as e:
 		print ('Error in connect ' , e)
 		return
 	if response.status_code == 200:
+	#	print(response.text)
 		j_response = json.loads(response.text)
-		org_count = j_response['result']['organizations']['total']
-		if org_count == 1:
-			org =  j_response['result']['organizations']['entities'][0]
-			ret = org
-		else:
-			eprint("Found {0} orgs on permid for lei {1}".format(org_count, lei))
+		ret = j_response["outputContentResponse"]
 	else:
 		raise Exception("Invalid response from permid.org {0}".format(response))
 	return ret
 
 
 if len(sys.argv) < 2:
-	print ('Get companies with LEIs from wikidata, match to orgs on permid.org')
+	print ('Get companies without LEIs from wikidata, match to orgs on permid.org')
+	print ('Using the concordance API on permid.org')
 	print ('Results are rendered in tab separated format, with PermIDs and WikiData')
 	print ('subjects formatted for copy/paste into QuickStatements')
 	print ()
-	print ('Usage: python get_companies_with_leis.py <permid_token> > <tsv_to_save>')
+	print ('Usage: python match.py <permid_token> > <tsv_to_save>')
 	sys.exit(1)
 
 access_token = sys.argv[1]
 # Query wikidata for orgs that have an lei
 sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
-sparql.setQuery("""SELECT  ?item ?Legal_Entity_ID WHERE {
+sparql.setQuery("""SELECT ?item ?itemLabel ?country ?countryLabel ?url ?headquarters_location ?headquarters_locationLabel WHERE {
   ?item wdt:P31 wd:Q4830453.
-  ?item wdt:P1278 ?Legal_Entity_ID.
-  MINUS {?item wdt:P3347 ?permID}
+  MINUS { ?item wdt:P3347 ?permID. }
+  OPTIONAL { ?item wdt:p856 ?url. }
+  ?item wdt:P17 ?country.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
+  ?item wdt:P159 ?headquarters_location.
 }
-  LIMIT 40
-""")
+LIMIT 10""")
+
 sparql.setReturnFormat(JSON)
 results = sparql.query().convert()
 count = 0
+str_list = []
+str_list.append('LocalID,Name,Country,City,Website')
 # for each lei, search permid.org by LEI for the organization
 for result in results["results"]["bindings"]:
-	lei = result["Legal_Entity_ID"]["value"]
-	wikidata_uri = result["item"]["value"]
-	found_org = search_permid_for_lei(access_token,lei)
-	if found_org is None:
-		eprint("No single match for org {0}, lei {1}".format(wikidata_uri,lei))
-	else:
-		org_name = found_org['organizationName']
-		uri, separator, permid = found_org['@id'].rpartition('-')
-		url, sep, code = wikidata_uri.rpartition('/')
-		print("{0}\tP3347\t\"{1}\"\t{2}\t{3}\t{4}".format(code,permid, count,lei,org_name,))
-	count = count + 1
-	time.sleep(1)
+	url, sep, code = result["item"]["value"].rpartition('/')
+	company_url = ""
+	if result.has_key("url"):
+		company_url = result["url"]["value"]
 
-
+	str_list.append("{0},{1},{2},{3},{4}".format(code,
+		result["itemLabel"]["value"],
+		result["countryLabel"]["value"],
+		result["headquarters_locationLabel"]["value"],
+		company_url))
+matches = permid_match_api(access_token,'\n'.join(str_list))
+if matches is not None:
+	for match in matches:
+		if match["Match Level"] == "Excellent":
+			url,sep, permID = match["Match OpenPermID"].rpartition('-')
+			print("{0}\tP3347\t\"{1}\"".format(match["Input_LocalID"],permID))
