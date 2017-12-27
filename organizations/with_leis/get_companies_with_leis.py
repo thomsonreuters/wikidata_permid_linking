@@ -54,10 +54,10 @@ def search_permid_for_lei(access_token, lei):
 
 if len(sys.argv) < 2:
 	print ('Get companies with LEIs from wikidata, match to orgs on permid.org')
-	print ('Most useful if you redirect std out to a file and then review in Excel')
-	print ('Before submitting to wikidata using something like https://tools.wmflabs.org/wikidata-todo/quick_statements.php')
+	print ('Results are rendered in tab separated format, with PermIDs and WikiData')
+	print ('subjects formatted for copy/paste into QuickStatements')
 	print ()
-	print ('Usage: python get_companies_with_leis.py <permid_token> > <csv_to_save>')
+	print ('Usage: python get_companies_with_leis.py <permid_token> > <tsv_to_save>')
 	sys.exit(1)
 
 access_token = sys.argv[1]
@@ -66,8 +66,9 @@ sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
 sparql.setQuery("""SELECT  ?item ?Legal_Entity_ID WHERE {
   ?item wdt:P31 wd:Q4830453.
   ?item wdt:P1278 ?Legal_Entity_ID.
-
+  MINUS {?item wdt:P3347 ?permID}
 }
+  LIMIT 40
 """)
 sparql.setReturnFormat(JSON)
 results = sparql.query().convert()
@@ -81,8 +82,9 @@ for result in results["results"]["bindings"]:
 		eprint("No single match for org {0}, lei {1}".format(wikidata_uri,lei))
 	else:
 		org_name = found_org['organizationName']
-		permid_uri = found_org['@id']
-		print("{0},{1},{2},{3},{4}".format(count,lei,wikidata_uri,org_name,permid_uri))
+		uri, separator, permid = found_org['@id'].rpartition('-')
+		url, sep, code = wikidata_uri.rpartition('/')
+		print("{0}\tP3347\t\"{1}\"\t{2}\t{3}\t{4}".format(code,permid, count,lei,org_name,))
 	count = count + 1
 	time.sleep(2)
 
