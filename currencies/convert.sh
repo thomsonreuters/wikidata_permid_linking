@@ -26,11 +26,16 @@ if [ $# -lt 1 ]; then
 	exit
 fi
 
-grep "<http://permid.org/ontology/currency/iso4217>" $1 |  sed 's/"\^\^<http:\/\/www.w3.org\/2001\/XMLSchema#string> .//' |  sed 's/ <http:\/\/permid.org\/ontology\/currency\/iso4217> "/,/' > temp_permids.csv
+# extract only the ISO currency lines from the OpenPermID download, print raw (quoted)
+# permid & iso code
+sed -n 's|^<https://permid.org/1-\([0-9]*\)> <http://permid.org/ontology/currency/iso4217> "\([A-Z]*\)"^^<http://www.w3.org/2001/XMLSchema#string> .|"\1"	\2|p' <$1 > temp_permids.tsv
 
-python map_by_isocode.py > temp_wikidata.csv
+# Get the currencies without a permid from wikidata
+python map_by_isocode.py > temp_wikidata.tsv
 
-join -1 2 -2 1 -t ,  <(sort -k 2 -t , temp_permids.csv) <(sort -t , temp_wikidata.csv) > joined.csv
+# Sort each file then pass to join. The $'\t' nonsense forces join to use a tab on
+# output which we need for QuickStatements
+join -1 2 -2 1 -o 2.2,2.3,1.1 -t $'\t'  <(sort -k 2  temp_permids.tsv) <(sort temp_wikidata.tsv) > joined.tsv
 
-rm temp_permids.csv
-rm temp_wikidata.csv
+rm temp_permids.tsv
+rm temp_wikidata.tsv
