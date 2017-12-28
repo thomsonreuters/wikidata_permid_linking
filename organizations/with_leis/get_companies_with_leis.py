@@ -55,9 +55,16 @@ if len(sys.argv) < 2:
 	print ('Get companies with LEIs from wikidata, match to orgs on permid.org')
 	print ('Results are rendered in tab separated format, with PermIDs and WikiData')
 	print ('subjects formatted for copy/paste into QuickStatements')
+	print ('Reads a list of LEIs to exclude (e.g. no hits from permid.org) from stdin')
+	print ('use an empty file to ignore this')
 	print ()
-	print ('Usage: python get_companies_with_leis.py <permid_token> > <tsv_to_save>')
+	print ('Usage: python get_companies_with_leis.py <permid_token> <<ignore_leis> > <tsv_to_save>')
 	sys.exit(1)
+
+
+exclude_leis = []
+for line in sys.stdin:
+	exclude_leis.append('"'+line.strip()+'"')
 
 access_token = sys.argv[1]
 # Query wikidata for orgs that have an lei
@@ -65,10 +72,12 @@ sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
 sparql.setQuery("""SELECT  ?item ?Legal_Entity_ID WHERE {
   ?item wdt:P31 wd:Q4830453.
   ?item wdt:P1278 ?Legal_Entity_ID.
-  MINUS {?item wdt:P3347 ?permID}
-}
+  MINUS {?item wdt:P3347 ?permID}.
+  FILTER (?Legal_Entity_ID NOT IN ("""+",".join(exclude_leis)
+  +"""))}
   LIMIT 40
 """)
+eprint(sparql)
 sparql.setReturnFormat(JSON)
 results = sparql.query().convert()
 count = 0

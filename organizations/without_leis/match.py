@@ -73,7 +73,7 @@ SELECT ?item ?itemLabel ?country ?countryLabel ?url ?headquarters_location ?head
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
   ?item wdt:P159 ?headquarters_location.
 }
-LIMIT 20
+LIMIT 40
 }
 ORDER BY ?item""")
 
@@ -94,7 +94,7 @@ for result in results["results"]["bindings"]:
 	if result.has_key("url"):
 		company_url = result["url"]["value"]
 
-	str_list.append(u"{0},{1},\"{2}\",\"{3}\",{4}".format(code,
+	str_list.append(u"{0},\"{1}\",\"{2}\",\"{3}\",{4}".format(code,
 		result["itemLabel"]["value"],
 		result["countryLabel"]["value"],
 		result["headquarters_locationLabel"]["value"],
