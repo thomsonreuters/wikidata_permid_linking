@@ -37,6 +37,8 @@ def permid_match_api(access_token, payload):
 	url = 'https://api.thomsonreuters.com/permid/match'
 	ret = None
 	try:
+		#eprint('request')
+		eprint(payload.encode('utf-8'))
 		response = requests.post(url, data=payload.encode('utf-8'), headers=headers)
 	except Exception  as e:
 		eprint (u'Error in connect ' , e)
@@ -59,9 +61,11 @@ if len(sys.argv) < 2:
 	sys.exit(1)
 
 access_token = sys.argv[1]
-# Query wikidata for orgs that have an lei
+# Query wikidata for orgs that don't have permid or lei.
+# Use an outer sort to handle orgs that have multiple headquarters
 sparql = SPARQLWrapper("https://query.wikidata.org/sparql")
 sparql.setQuery("""SELECT ?item ?itemLabel ?country ?countryLabel ?url ?headquarters_location ?headquarters_locationLabel WHERE {
+SELECT ?item ?itemLabel ?country ?countryLabel ?url ?headquarters_location ?headquarters_locationLabel WHERE {
   ?item wdt:P31 wd:Q4830453.
   MINUS { ?item wdt:P3347 ?permID. }
   OPTIONAL { ?item wdt:p856 ?url. }
@@ -69,21 +73,28 @@ sparql.setQuery("""SELECT ?item ?itemLabel ?country ?countryLabel ?url ?headquar
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
   ?item wdt:P159 ?headquarters_location.
 }
-LIMIT 20""")
+LIMIT 20
+}
+ORDER BY ?item""")
 
 sparql.setReturnFormat(JSON)
 results = sparql.query().convert()
 count = 0
 str_list = []
 str_list.append(u'LocalID,Name,Country,City,Website')
+previous_org_code = ""
 # for each lei, search permid.org by LEI for the organization
 for result in results["results"]["bindings"]:
 	url, sep, code = result["item"]["value"].rpartition('/')
+	if previous_org_code == code:
+		continue
+	previous_org_code = code
+
 	company_url = u""
 	if result.has_key("url"):
 		company_url = result["url"]["value"]
 
-	str_list.append(u"{0},{1},{2},{3},{4}".format(code,
+	str_list.append(u"{0},{1},\"{2}\",\"{3}\",{4}".format(code,
 		result["itemLabel"]["value"],
 		result["countryLabel"]["value"],
 		result["headquarters_locationLabel"]["value"],
