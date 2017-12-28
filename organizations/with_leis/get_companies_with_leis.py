@@ -23,7 +23,6 @@ from __future__ import print_function
 
 import sys
 import requests
-import json
 import time
 from SPARQLWrapper import SPARQLWrapper, JSON
 
@@ -40,7 +39,7 @@ def search_permid_for_lei(access_token, lei):
 		print ('Error in connect ' , e)
 		return
 	if response.status_code == 200:
-		j_response = json.loads(response.text)
+		j_response = response.json()
 		org_count = j_response['result']['organizations']['total']
 		if org_count == 1:
 			org =  j_response['result']['organizations']['entities'][0]

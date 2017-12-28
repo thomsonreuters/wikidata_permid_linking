@@ -4,23 +4,22 @@ This script is designed to work with [Quick Statements](https://tools.wmflabs.or
 
 To use, run from the command line 
 ```shell
-python get_companies_with_leis.py <Your PermID.org API key> 
+python match.py <Your PermID.org API key> 
 ```
 
-The script will download 20 companies with LEIs but without PermIDs from WikiData. For each company, it will then attempt to 
-search permid.org for the matching company. If a unique match is found, the resulting match is output as tab separated values. 
+The script will download 20 companies including website (if available), name, country and city without a PermID. 
+These are then passed to the permid.org matching service. For each record returned, if the match is 'excellent' 
+then a Quick Statements compatible statement is output to stdout. Non matches are output to stderr
+
 For example:
 ```
-Q1446709	P3347	"4296590069"	2	V22E9B3P7BX1W5NNT053	Crown Equipment Corp
+Q2283	P3347	"4295907168"	Microsoft Corp
 ```
 
 The first three columns can then be cut/paste into Quick Statements (note that copy/paste from console will likely drop the tab
 characters that Quick Statements requires)
 
-The other three columns are for quality control:
-- index of found company
-- LEI
-- Company Name (from permid.org)
+The remaining column (name) is for quality control.
 
 O and multi matches are output to std err so you can redirect the script output to a file if you wish
 

@@ -23,7 +23,6 @@ from __future__ import print_function
 
 import sys
 import requests
-import json
 import time
 from SPARQLWrapper import SPARQLWrapper, JSON
 
@@ -43,8 +42,7 @@ def permid_match_api(access_token, payload):
 		print ('Error in connect ' , e)
 		return
 	if response.status_code == 200:
-	#	print(response.text)
-		j_response = json.loads(response.text)
+		j_response = response.json()
 		ret = j_response["outputContentResponse"]
 	else:
 		raise Exception("Invalid response from permid.org {0}".format(response))
@@ -71,7 +69,7 @@ sparql.setQuery("""SELECT ?item ?itemLabel ?country ?countryLabel ?url ?headquar
   SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
   ?item wdt:P159 ?headquarters_location.
 }
-LIMIT 10""")
+LIMIT 20""")
 
 sparql.setReturnFormat(JSON)
 results = sparql.query().convert()
@@ -95,4 +93,8 @@ if matches is not None:
 	for match in matches:
 		if match["Match Level"] == "Excellent":
 			url,sep, permID = match["Match OpenPermID"].rpartition('-')
-			print("{0}\tP3347\t\"{1}\"".format(match["Input_LocalID"],permID))
+			print("{0}\tP3347\t\"{1}\"\t{2}"
+				.format(match["Input_LocalID"],permID,match["Match OrgName"]))
+		else:
+			eprint("No match for {0}, {1}"
+				.format(match["Input_Name"],match["Input_LocalID"]))
