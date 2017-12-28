@@ -21,5 +21,5 @@ characters that Quick Statements requires)
 
 The remaining column (name) is for quality control.
 
-O and multi matches are output to std err so you can redirect the script output to a file if you wish
+O matches are output to std err so you can redirect the script output to a file if you wish
 

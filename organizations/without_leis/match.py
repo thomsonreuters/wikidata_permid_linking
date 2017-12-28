@@ -32,14 +32,14 @@ def eprint(*args, **kwargs):
 def permid_match_api(access_token, payload):
 	headers = {'X-AG-Access-Token' : access_token,
 		'x-openmatch-dataType':'Organization',
-		'Content-Type':'text/plain',
+		'Content-Type':'text/plain; charset=UTF-8',
 		'x-openmatch-numberOfMatchesPerRecord': '1'}
 	url = 'https://api.thomsonreuters.com/permid/match'
 	ret = None
 	try:
-		response = requests.post(url, data=payload, headers=headers)
+		response = requests.post(url, data=payload.encode('utf-8'), headers=headers)
 	except Exception  as e:
-		print ('Error in connect ' , e)
+		eprint (u'Error in connect ' , e)
 		return
 	if response.status_code == 200:
 		j_response = response.json()
@@ -75,15 +75,15 @@ sparql.setReturnFormat(JSON)
 results = sparql.query().convert()
 count = 0
 str_list = []
-str_list.append('LocalID,Name,Country,City,Website')
+str_list.append(u'LocalID,Name,Country,City,Website')
 # for each lei, search permid.org by LEI for the organization
 for result in results["results"]["bindings"]:
 	url, sep, code = result["item"]["value"].rpartition('/')
-	company_url = ""
+	company_url = u""
 	if result.has_key("url"):
 		company_url = result["url"]["value"]
 
-	str_list.append("{0},{1},{2},{3},{4}".format(code,
+	str_list.append(u"{0},{1},{2},{3},{4}".format(code,
 		result["itemLabel"]["value"],
 		result["countryLabel"]["value"],
 		result["headquarters_locationLabel"]["value"],
@@ -93,8 +93,8 @@ if matches is not None:
 	for match in matches:
 		if match["Match Level"] == "Excellent":
 			url,sep, permID = match["Match OpenPermID"].rpartition('-')
-			print("{0}\tP3347\t\"{1}\"\t{2}"
+			print(u"{0}\tP3347\t\"{1}\"\t{2}"
 				.format(match["Input_LocalID"],permID,match["Match OrgName"]))
 		else:
-			eprint("No match for {0}, {1}"
+			eprint(u"No match for {0}, {1}"
 				.format(match["Input_Name"],match["Input_LocalID"]))
