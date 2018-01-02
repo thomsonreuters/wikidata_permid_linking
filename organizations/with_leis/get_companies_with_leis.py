@@ -77,7 +77,7 @@ sparql.setQuery("""SELECT  ?item ?Legal_Entity_ID WHERE {
   +"""))}
   LIMIT 40
 """)
-eprint(sparql)
+
 sparql.setReturnFormat(JSON)
 results = sparql.query().convert()
 count = 0
