@@ -75,7 +75,7 @@ SELECT ?item ?itemLabel ?country ?countryLabel ?url ?headquarters_location ?head
 }
 LIMIT 40
 }
-ORDER BY ?item""")
+ORDER BY ?itemLabel""")
 
 sparql.setReturnFormat(JSON)
 results = sparql.query().convert()
