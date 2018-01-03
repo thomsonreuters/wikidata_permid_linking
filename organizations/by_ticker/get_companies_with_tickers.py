@@ -150,10 +150,10 @@ for result in results["results"]["bindings"]:
 	ric = ticker+'.'+exchange_code
 	found_orgs = search_permid_for_ticker(access_token,ric, True)
 	if found_orgs is None:
-		eprint(u"No match for org {0}, ric {1}, trying by ticker".format(wikidata_uri,ric))
+		eprint(u"No match for org {0}, ric '{1}', trying by ticker".format(wikidata_uri,ric))
 		found_orgs = search_permid_for_ticker(access_token,ticker, False)
 	if found_orgs is None:
-		eprint(u"No match for org {0}, ticker {1}, trying by ticker".format(wikidata_uri,ticker))
+		eprint(u"No match for org {0}, ticker '{1}'".format(wikidata_uri,ticker))
 	else:
 		for org in found_orgs:
 			org_name = org['organizationName']
