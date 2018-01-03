@@ -3,7 +3,8 @@
 Some wikidata entries have a ticker attached to them. Since permid.org has a much wider coverage for tickers, just searching 
 for the ticker will result in multiple matches.
 
-However, if we can quantify which exchange the ticker is on, we can convert the ticker to a [Reuters Instrument Code](https://en.wikipedia.org/wiki/Reuters_Instrument_Code) and search for that which _should be_ unique.
+However, if we can quantify which exchange the ticker is on, we can convert the ticker to a [Reuters Instrument Code](https://en.wikipedia.org/wiki/Reuters_Instrument_Code) and search for that which _should be_ unique. If no match is found, a search is run using just 
+the ticker. This will likely result in multi-matches so use the QA columns to validate before pasting into QuickStatements.
 
 This script queries for 40 organizations at a time from Wikidata that have no permid but do have a ticker. 
 

@@ -79,13 +79,17 @@ exchange_mappings = {'BX':'Q1003245', #Bucharest Stock Exchange
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
 
-def search_permid_for_ticker(access_token, ric):
+def search_permid_for_ticker(access_token, code, by_ric):
 	headers = {'X-AG-Access-Token' : access_token}
-	url = 'https://api.thomsonreuters.com/permid/search?q=ric:'+ric+'&entitytype=organization'
+	if by_ric:
+		url = 'https://api.thomsonreuters.com/permid/search?q=ric:'+code+'&entitytype=organization'
+	else:
+		url = 'https://api.thomsonreuters.com/permid/search?q=ticker:'+code+'&entitytype=organization'
+
 	ret = None
 	try:
 		response = requests.get(url, headers=headers)
-	except Exception  as e:
+	except Exception as e:
 		print ('Error in connect ' , e)
 		return
 	if response.status_code == 200:
@@ -95,7 +99,7 @@ def search_permid_for_ticker(access_token, ric):
 			orgs =  j_response['result']['organizations']['entities']
 			ret = orgs
 		else:
-			eprint(u"Found {0} orgs on permid for ric {1}".format(org_count, ric))
+			eprint(u"Found {0} orgs on permid for code {1}".format(org_count, code))
 	else:
 		raise Exception(u"Invalid response from permid.org {0}".format(response))
 	return ret
@@ -144,9 +148,12 @@ for result in results["results"]["bindings"]:
 	wikidata_uri = result["item"]["value"]
 	wikidata_company = result["itemLabel"]["value"]
 	ric = ticker+'.'+exchange_code
-	found_orgs = search_permid_for_ticker(access_token,ric)
+	found_orgs = search_permid_for_ticker(access_token,ric, True)
 	if found_orgs is None:
-		eprint(u"No match for org {0}, ric {1}".format(wikidata_uri,ric))
+		eprint(u"No match for org {0}, ric {1}, trying by ticker".format(wikidata_uri,ric))
+		found_orgs = search_permid_for_ticker(access_token,ticker, False)
+	if found_orgs is None:
+		eprint(u"No match for org {0}, ticker {1}, trying by ticker".format(wikidata_uri,ticker))
 	else:
 		for org in found_orgs:
 			org_name = org['organizationName']
