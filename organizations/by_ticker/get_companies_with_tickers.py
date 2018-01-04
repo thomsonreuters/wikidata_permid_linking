@@ -43,7 +43,7 @@ exchange_mappings = {'BX':'Q1003245', #Bucharest Stock Exchange
 'SI':'Q1515558', #Singapore Exchange Securities Trading Ltd
 'GH':'Q1521374', #Ghana Stock Exchange
 'PS':'Q1526647', #Philippine Stock Exchange, Inc
-'JK':'Q1661737', #Indonesia Stock Exchange (formerly Jakarta SE)
+'JK':'Q1661737', #Indonesia Stock Exchange (formerly Jakarta SE) #done to here
 'L':'Q171240', #London Stock Exchange
 'T':'Q217475', #Tokyo Stock Exchange
 'LM':'Q2380045', #Bolsa de Valores de Lima S.A.
@@ -98,8 +98,6 @@ def search_permid_for_ticker(access_token, code, by_ric):
 		if org_count > 0:
 			orgs =  j_response['result']['organizations']['entities']
 			ret = orgs
-		else:
-			eprint(u"Found {0} orgs on permid for code {1}".format(org_count, code))
 	else:
 		raise Exception(u"Invalid response from permid.org {0}".format(response))
 	return ret
@@ -161,6 +159,6 @@ for result in results["results"]["bindings"]:
 			url, sep, code = wikidata_uri.rpartition('/')
 			print(u"{0}\tP3347\t\"{1}\"\t{2}\t{3}\t{4}={5}".format(code, permid, count, ric, wikidata_company, org_name))
 	count = count + 1
-	time.sleep(1)
+	time.sleep(.5)
 
 
